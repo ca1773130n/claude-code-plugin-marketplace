@@ -8,10 +8,9 @@ A Claude Code plugin marketplace — hosts plugins under `plugins/` (as git subm
 
 ## Plugins
 
-Three plugins are registered:
+Two plugins are registered:
 - **grd** (GetResearchDone) — R&D workflow automation, git submodule
 - **HarnessSync** — Multi-backend config sync (Claude Code → Codex/Gemini/OpenCode), git submodule
-- **foobar** — Example/reference plugin, local directory
 
 ## Commands
 

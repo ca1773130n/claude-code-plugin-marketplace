@@ -6,9 +6,8 @@ A self-service marketplace infrastructure for Claude Code plugins with automated
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [HarnessSync](plugins/HarnessSync/) | Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode | 1.0.0 |
-| [GetResearchDone](plugins/GetResearchDone/) | R&D workflow automation for Claude Code | submodule |
-| [foobar](plugins/foobar/) | Example plugin for reference | 1.0.0 |
+| [HarnessSync](plugins/HarnessSync/) | Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode | 0.1.0 |
+| [GetResearchDone](plugins/GetResearchDone/) | R&D workflow automation for Claude Code | 0.1.0 |
 
 ## Quick Start
 
