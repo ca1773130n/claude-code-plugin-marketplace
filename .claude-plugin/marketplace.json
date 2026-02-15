@@ -8,28 +8,42 @@
   },
   "plugins": [
     {
+      "name": "foobar",
+      "description": "A Claude Code plugin",
+      "version": "1.0.0",
+      "author": {
+        "name": "Cameleon X"
+      },
+      "source": "./plugins/foobar",
+      "category": "development"
+    },
+    {
       "name": "grd",
       "description": "Get Research Done — R&D workflow automation for Claude Code",
-      "version": "0.3.2",
+      "version": "0.1.0",
       "author": {
         "name": "Cameleon X"
       },
       "source": {
         "source": "url",
-        "url": "https://github.com/ca1773130n/GRD.git"
+        "url": "https://github.com/ca1773130n/GetResearchDone.git"
       },
       "category": "development",
-      "homepage": "https://github.com/ca1773130n/GRD"
+      "homepage": "https://github.com/ca1773130n/GetResearchDone"
     },
     {
-      "name": "multi-cli-harness",
-      "description": "Multi-provider AI CLI harness with intelligent routing, automatic fallback, and multi-backend configuration sync. Features Matrix-themed agent teams (17 agents), Claude Code Teams integration, mental model document support, and interview-based setup. Routes tasks through Claude Code -> OpenCode/Anthropic -> OpenCode/Gemini -> Gemini CLI with quota monitoring.",
-      "version": "1.0.0",
+      "name": "HarnessSync",
+      "description": "Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode. Configure once, sync everywhere.",
+      "version": "0.1.0",
       "author": {
-        "name": "edward-seo"
+        "name": "HarnessSync Contributors"
       },
-      "source": "./plugins/multi-cli-harness",
-      "category": "development"
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ca1773130n/HarnessSync.git"
+      },
+      "category": "development",
+      "homepage": "https://github.com/ca1773130n/HarnessSync"
     }
   ]
 }
