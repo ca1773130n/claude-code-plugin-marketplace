@@ -19,6 +19,7 @@ Run `npm ci` before using any script (required for ajv-cli JSON Schema validatio
 | generate-marketplace.sh | Regenerate marketplace.json | (none) | 0=generated, 1=error, 2=usage |
 | run-fixture-tests.sh | Run validation test fixtures | (none) | 0=pass, 1=fail, 2=usage |
 | run-e2e-test.sh | End-to-end pipeline test | (none) | 0=pass, 1=fail, 2=usage |
+| deploy.sh | Sync submodule plugins to latest origin/main | `[--dry-run]` | 0=synced, 1=error, 2=usage |
 
 ## Detailed Reference
 
@@ -288,6 +289,52 @@ run-e2e-test.sh
 | 0 | All E2E tests passed |
 | 1 | Test failure |
 | 2 | Usage error or missing dependencies |
+
+### deploy.sh
+
+**Purpose:** Syncs all git submodule plugins under `plugins/` to their latest `origin/main`. Extracts the latest version from git tags, updates the marketplace catalog (`.claude-plugin/marketplace.json`) with synced versions, ensures `.gitmodules` tracks `branch = main`, and stages all changes for commit.
+
+**Usage:**
+
+```
+deploy.sh [--dry-run]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Show what would change without modifying anything |
+| `--help` | Show usage and exit |
+
+**Steps:**
+1. Ensure `.gitmodules` sets `branch = main` for each submodule
+2. Fetch and checkout `origin/main` for each submodule
+3. Read the latest semver git tag as the plugin version (falls back to `plugin.json`)
+4. Update version in `.claude-plugin/marketplace.json`
+5. Stage `.gitmodules`, submodule refs, and `marketplace.json`
+
+**Examples:**
+
+```bash
+# Preview changes
+./scripts/deploy.sh --dry-run
+
+# Sync and stage
+./scripts/deploy.sh
+git commit -m 'chore: sync plugin submodules to latest'
+git push
+```
+
+**Exit Codes:**
+
+| Code | Meaning |
+|------|---------|
+| 0 | All submodules synced and marketplace updated |
+| 1 | Sync or update failed |
+| 2 | Missing dependencies or usage error |
+
+---
 
 ## Conventions
 
