@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
