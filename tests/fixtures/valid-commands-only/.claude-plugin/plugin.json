@@ -1,0 +1,7 @@
+{
+  "name": "valid-commands-only",
+  "version": "1.0.0",
+  "description": "Test fixture with commands array",
+  "author": { "name": "Test Author" },
+  "commands": ["./workflows/example.md"]
+}

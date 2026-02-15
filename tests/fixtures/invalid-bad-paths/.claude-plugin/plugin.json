@@ -1,0 +1,4 @@
+{
+  "name": "invalid-bad-paths",
+  "commands": ["/absolute/path.md", "no-dot-slash.md"]
+}

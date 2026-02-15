@@ -1,0 +1,4 @@
+{
+  "name": "invalid-missing-files",
+  "commands": ["./does-not-exist.md", "./also-missing.md"]
+}

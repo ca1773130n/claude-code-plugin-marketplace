@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ca1773130n/claude-plugin-marketplace/schemas/marketplace.schema.json",
+  "title": "Claude Plugin Marketplace Manifest",
+  "description": "Schema for .claude-plugin/marketplace.json — compatible with Claude Code marketplace format",
+  "type": "object",
+  "required": ["name", "owner", "plugins"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Marketplace identifier"
+    },
+    "version": {
+      "type": "string",
+      "description": "Marketplace manifest version"
+    },
+    "description": {
+      "type": "string",
+      "description": "Marketplace description"
+    },
+    "owner": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/pluginEntry"
+      },
+      "minItems": 1
+    }
+  },
+  "definitions": {
+    "pluginEntry": {
+      "type": "object",
+      "required": ["name", "source"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Plugin name"
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Relative path to plugin directory"
+            },
+            {
+              "type": "object",
+              "required": ["source", "url"],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "const": "url"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Git repository URL"
+                },
+                "ref": {
+                  "type": "string",
+                  "description": "Git branch or tag"
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "Git commit SHA for pinning"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Plugin source — relative path or remote git URL object"
+        },
+        "description": {
+          "type": "string",
+          "description": "Plugin description"
+        },
+        "version": {
+          "type": "string",
+          "description": "Plugin version"
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" }
+          }
+        },
+        "category": {
+          "type": "string",
+          "description": "Plugin category"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Plugin homepage URL"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

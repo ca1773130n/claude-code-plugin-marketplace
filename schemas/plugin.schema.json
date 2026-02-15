@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ca1773130n/claude-plugin-marketplace/schemas/plugin.schema.json",
+  "title": "Claude Code Plugin Manifest",
+  "description": "Schema for .claude-plugin/plugin.json",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Plugin identifier (lowercase, hyphens allowed)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*)?(\\+[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*)?$",
+      "description": "Semantic version string"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Short description of the plugin"
+    },
+    "author": {
+      "$ref": "#/definitions/authorObject"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "Plugin homepage URL"
+    },
+    "repository": {
+      "type": "string",
+      "description": "Source repository URL"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "Searchable keywords"
+    },
+    "commands": {
+      "$ref": "#/definitions/pathOrPaths",
+      "description": "Slash command definition files"
+    },
+    "agents": {
+      "$ref": "#/definitions/pathOrPaths",
+      "description": "Agent definition files"
+    },
+    "skills": {
+      "$ref": "#/definitions/pathOrPaths",
+      "description": "Skill definition files"
+    },
+    "hooks": {
+      "$ref": "#/definitions/pathOrPathsOrHooksObject",
+      "description": "Hook definitions (file path, array of paths, or inline object)"
+    },
+    "mcpServers": {
+      "$ref": "#/definitions/pathOrPathsOrObject",
+      "description": "MCP server configurations"
+    },
+    "outputStyles": {
+      "$ref": "#/definitions/pathOrPaths",
+      "description": "Output style definition files"
+    },
+    "lspServers": {
+      "$ref": "#/definitions/pathOrPathsOrObject",
+      "description": "LSP server configurations"
+    }
+  },
+  "definitions": {
+    "relativePath": {
+      "type": "string",
+      "pattern": "^\\.\\/.*$",
+      "description": "Relative path starting with ./"
+    },
+    "pathOrPaths": {
+      "anyOf": [
+        { "$ref": "#/definitions/relativePath" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/relativePath" },
+          "minItems": 1
+        }
+      ]
+    },
+    "pathOrPathsOrObject": {
+      "anyOf": [
+        { "$ref": "#/definitions/relativePath" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/relativePath" },
+          "minItems": 1
+        },
+        { "type": "object" }
+      ]
+    },
+    "pathOrPathsOrHooksObject": {
+      "anyOf": [
+        { "$ref": "#/definitions/relativePath" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/relativePath" },
+          "minItems": 1
+        },
+        { "$ref": "#/definitions/inlineHooksObject" }
+      ]
+    },
+    "inlineHooksObject": {
+      "type": "object",
+      "patternProperties": {
+        "^(PreToolUse|PostToolUse|PostToolUseFailure|PermissionRequest|UserPromptSubmit|Notification|Stop|SubagentStart|SubagentStop|SessionStart|SessionEnd|TeammateIdle|TaskCompleted|PreCompact)$": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hookGroup"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "hookGroup": {
+      "type": "object",
+      "properties": {
+        "matcher": {
+          "type": "string",
+          "description": "Tool name or pattern to match"
+        },
+        "hooks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hookEntry"
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["hooks"]
+    },
+    "hookEntry": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["command"]
+        },
+        "command": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["type", "command"]
+    },
+    "authorObject": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Author email"
+        },
+        "url": {
+          "type": "string",
+          "description": "Author URL"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

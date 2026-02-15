@@ -1,0 +1,111 @@
+name: Validate Plugins
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - 'schemas/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.filter.outputs.changes }}
+      plugins_changed: ${{ steps.filter.outputs.changes != '[]' }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # Add new plugin filters here when onboarding
+          filters: |
+            GetResearchDone:
+              - 'plugins/GetResearchDone/**'
+            HarnessSync:
+              - 'plugins/HarnessSync/**'
+
+  validate-plugins:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.plugins_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJSON(needs.detect-changes.outputs.plugins) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Validate ${{ matrix.plugin }}
+        env:
+          PLUGIN_NAME: ${{ matrix.plugin }}
+        run: ./scripts/validate-plugin.sh "plugins/$PLUGIN_NAME"
+      - name: Score ${{ matrix.plugin }}
+        id: score
+        if: always()
+        env:
+          PLUGIN_NAME: ${{ matrix.plugin }}
+        run: |
+          # Run human-readable output for CI log
+          ./scripts/score-plugin.sh "plugins/$PLUGIN_NAME" || true
+
+          # Capture JSON output for PR comment
+          SCORE_JSON=$(./scripts/score-plugin.sh "plugins/$PLUGIN_NAME" --json 2>/dev/null || echo '{"plugin":"unknown","total":0}')
+          TOTAL=$(echo "$SCORE_JSON" | jq -r '.total // 0')
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+
+          # Build markdown table for PR comment
+          COMMENT="## Quality Score: $PLUGIN_NAME -- ${TOTAL}/100\n\n"
+          COMMENT+="| Category | Score | Details |\n"
+          COMMENT+="|----------|-------|---------|\n"
+
+          for cat in manifest_completeness documentation structure_integrity naming_conventions version_hygiene; do
+            SCORE=$(echo "$SCORE_JSON" | jq -r ".categories.$cat.score // 0")
+            MAX=$(echo "$SCORE_JSON" | jq -r ".categories.$cat.max // 20")
+            DEDS=$(echo "$SCORE_JSON" | jq -r ".categories.$cat.deductions | if length > 0 then join(\", \") else \"--\" end")
+            case "$cat" in
+              manifest_completeness) PRETTY_NAME="Manifest Completeness" ;;
+              documentation) PRETTY_NAME="Documentation" ;;
+              structure_integrity) PRETTY_NAME="Structure Integrity" ;;
+              naming_conventions) PRETTY_NAME="Naming Conventions" ;;
+              version_hygiene) PRETTY_NAME="Version Hygiene" ;;
+            esac
+            COMMENT+="| $PRETTY_NAME | $SCORE/$MAX | $DEDS |\n"
+          done
+
+          echo "comment<<SCORE_EOF" >> "$GITHUB_OUTPUT"
+          echo -e "$COMMENT" >> "$GITHUB_OUTPUT"
+          echo "SCORE_EOF" >> "$GITHUB_OUTPUT"
+      - name: Comment PR with quality score
+        if: always() && github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          message: ${{ steps.score.outputs.comment }}
+          comment-tag: quality-${{ matrix.plugin }}
+
+  test-fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run fixture tests
+        run: ./scripts/run-fixture-tests.sh

@@ -1,0 +1,72 @@
+name: Self Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'schemas/**'
+      - 'tests/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'schemas/**'
+      - 'tests/**'
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * 1'   # Weekly Monday 6am UTC
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-tests:
+    name: Fixture Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run fixture tests
+        run: ./scripts/run-fixture-tests.sh
+
+  e2e-test:
+    name: E2E Pipeline Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run E2E pipeline test
+        run: ./scripts/run-e2e-test.sh
+
+  script-help-check:
+    name: Script Help Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify all scripts support --help
+        run: |
+          failed=0
+          for script in scripts/*.sh; do
+            exit_code=0
+            ./"$script" --help >/dev/null 2>&1 || exit_code=$?
+            if [ "$exit_code" -ne 0 ]; then
+              echo "FAIL: $script --help exited with $exit_code (expected 0)"
+              failed=1
+            else
+              echo "PASS: $script --help"
+            fi
+          done
+          exit $failed

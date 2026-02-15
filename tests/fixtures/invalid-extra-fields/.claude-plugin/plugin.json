@@ -1,0 +1,6 @@
+{
+  "name": "invalid-extra-fields",
+  "version": "1.0.0",
+  "unknownField": "should this be rejected?",
+  "anotherUnknown": 42
+}

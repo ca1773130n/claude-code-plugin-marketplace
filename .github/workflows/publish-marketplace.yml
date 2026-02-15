@@ -1,0 +1,49 @@
+name: Publish Marketplace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**/plugin.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-marketplace
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run fixture tests (safety gate)
+        run: ./scripts/run-fixture-tests.sh
+
+      - name: Generate marketplace.json
+        run: ./scripts/generate-marketplace.sh
+
+      - name: Validate generated marketplace.json
+        run: |
+          npx ajv validate \
+            -s schemas/marketplace.schema.json \
+            -d .claude-plugin/marketplace.json \
+            --spec=draft7 \
+            --all-errors \
+            --errors=text
+
+      - uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: 'chore: regenerate marketplace.json [skip ci]'
+          file_pattern: '.claude-plugin/marketplace.json'

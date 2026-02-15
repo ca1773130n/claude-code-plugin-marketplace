@@ -1,0 +1,14 @@
+{
+  "name": "example-plugin",
+  "version": "1.0.0",
+  "description": "A Claude Code plugin that does something useful",
+  "author": {
+    "name": "Your Name"
+  },
+  "homepage": "https://github.com/YOUR-USERNAME/example-plugin",
+  "repository": "https://github.com/YOUR-USERNAME/example-plugin",
+  "license": "MIT",
+  "keywords": ["claude-code", "plugin"],
+  "commands": ["./commands/example.md"],
+  "agents": ["./agents/example-plugin-example-agent.md"]
+}

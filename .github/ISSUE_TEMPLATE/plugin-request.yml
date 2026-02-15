@@ -1,0 +1,72 @@
+name: Plugin Request
+description: Request a new plugin be added to the marketplace
+title: "[Plugin Request]: "
+labels: ["plugin-request"]
+
+body:
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Plugin Name
+      description: >
+        Lowercase identifier using only letters, digits, and hyphens
+        (e.g., my-awesome-plugin). Must match pattern: ^[a-z][a-z0-9-]*$
+      placeholder: my-plugin
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: >
+        What does this plugin do? Describe its purpose, key features,
+        and target audience.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Primary category for marketplace classification
+      options:
+        - development
+        - productivity
+        - testing
+        - documentation
+        - devops
+        - research
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: repository
+    attributes:
+      label: Source Repository
+      description: URL of the plugin's git repository (if hosted externally)
+      placeholder: "https://github.com/user/repo"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: >
+        Any other information about the plugin (links, screenshots, prior art)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Submission Checklist
+      options:
+        - label: I have read the CONTRIBUTING.md guide
+          required: true
+        - label: The plugin name follows the naming convention (lowercase-hyphenated)
+          required: false
+        - label: I am willing to maintain this plugin or have identified a maintainer
+          required: false

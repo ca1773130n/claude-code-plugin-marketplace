@@ -1,0 +1,6 @@
+[submodule "plugins/GetResearchDone"]
+	path = plugins/GetResearchDone
+	url = https://github.com/ca1773130n/GetResearchDone.git
+[submodule "plugins/HarnessSync"]
+	path = plugins/HarnessSync
+	url = https://github.com/ca1773130n/HarnessSync.git

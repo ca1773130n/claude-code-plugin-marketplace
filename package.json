@@ -1,0 +1,12 @@
+{
+  "name": "claude-plugin-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin marketplace infrastructure",
+  "devDependencies": {
+    "ajv-cli": "5.0.0"
+  },
+  "scripts": {
+    "validate:schema": "ajv validate --spec=draft7 --all-errors --errors=text"
+  }
+}

@@ -1,0 +1,11 @@
+# Default owners for the marketplace infrastructure
+* @ca1773130n
+
+# Plugin-specific ownership
+/plugins/GetResearchDone/ @ca1773130n
+/plugins/HarnessSync/ @ca1773130n
+
+# Marketplace infrastructure (schemas, scripts, workflows)
+/schemas/ @ca1773130n
+/scripts/ @ca1773130n
+/.github/ @ca1773130n

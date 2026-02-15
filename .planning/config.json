@@ -1,0 +1,38 @@
+{
+  "model_profile": "quality",
+  "commit_docs": true,
+  "search_gitignored": false,
+  "branching_strategy": "none",
+  "phase_branch_template": "grd/phase-{phase}-{slug}",
+  "milestone_branch_template": "grd/{milestone}-{slug}",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true
+  },
+  "parallelization": true,
+  "autonomous_mode": true,
+  "research_gates": {
+    "verification_design": true,
+    "method_selection": true,
+    "baseline_review": false
+  },
+  "eval_config": {
+    "default_metrics": [
+      "PSNR",
+      "SSIM",
+      "LPIPS"
+    ],
+    "baseline_tracking": true
+  },
+  "github_integration": {
+    "enabled": false,
+    "project_name": null,
+    "default_labels": [
+      "research",
+      "implementation",
+      "evaluation",
+      "integration"
+    ]
+  }
+}
