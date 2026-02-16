@@ -10,14 +10,14 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [options]
 
-Syncs all git submodule plugins to their latest origin/main, extracts version
-from the latest git tag, updates the marketplace catalog, and stages the
-submodule hash changes for commit.
+Syncs all git submodule plugins to their latest origin/main, reads version
+from plugin.json (source of truth), updates the marketplace catalog, commits,
+and pushes.
 
 Steps performed:
   1. Ensure .gitmodules tracks branch = main for each submodule
   2. Fetch and checkout origin/main for each submodule in plugins/
-  3. Read the latest semver git tag as the plugin version
+  3. Read version from plugin.json (warn on tag mismatch)
   4. Update .claude-plugin/marketplace.json with synced versions
   5. Stage .gitmodules, submodule refs, and marketplace.json
   6. Commit and push to origin
@@ -105,8 +105,8 @@ for sub_path in "${submodules[@]}"; do
   old_hash=$(git -C "$sub_dir" rev-parse HEAD 2>/dev/null || echo "none")
   echo "  Current:  ${old_hash:0:12}"
 
-  echo "  Fetching origin/main..."
-  git -C "$sub_dir" fetch origin main --tags --quiet
+  echo "  Fetching origin..."
+  git -C "$sub_dir" fetch origin --tags --force --quiet
 
   remote_hash=$(git -C "$sub_dir" rev-parse origin/main 2>/dev/null || echo "none")
   echo "  Remote:   ${remote_hash:0:12}"
@@ -124,25 +124,26 @@ for sub_path in "${submodules[@]}"; do
     echo "  Already at latest"
   fi
 
-  # Step 3: Get version from origin/main — prefer plugin.json, use tag only if tagged
+  # Step 3: Get version from plugin.json (source of truth)
   # Read plugin.json from the remote ref, not the local working tree
   plugin_json_content=$(git -C "$sub_dir" show origin/main:.claude-plugin/plugin.json 2>/dev/null || true)
-  plugin_json="$sub_dir/.claude-plugin/plugin.json"
 
-  # Check if origin/main has a tag directly on it
-  head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
-
-  if [[ -n "$head_tag" ]]; then
-    # origin/main is tagged — use the tag version
-    tag_version="${head_tag#v}"
-    echo "  Version:  $tag_version (from tag $head_tag)"
-  elif [[ -n "$plugin_json_content" ]]; then
-    # No tag on origin/main — use plugin.json as source of truth
+  if [[ -n "$plugin_json_content" ]]; then
     tag_version=$(echo "$plugin_json_content" | jq -r '.version // "0.0.0"')
     echo "  Version:  $tag_version (from plugin.json)"
   else
     tag_version="0.0.0"
-    echo "  Version:  $tag_version (no plugin.json, no tags)"
+    echo "  Version:  $tag_version (no plugin.json found)"
+  fi
+
+  # Warn if a git tag on origin/main disagrees with plugin.json
+  head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
+  if [[ -n "$head_tag" ]]; then
+    head_tag_ver="${head_tag#v}"
+    if [[ "$head_tag_ver" != "$tag_version" ]]; then
+      echo "  WARNING: tag $head_tag ($head_tag_ver) != plugin.json ($tag_version)"
+      echo "           plugin.json is source of truth — using $tag_version"
+    fi
   fi
 
   # Step 4: Update marketplace.json with new version
@@ -198,11 +199,14 @@ if [[ "$DRY_RUN" == false ]]; then
 
   echo ""
   echo "=== Committing ==="
-  git -C "$REPO_ROOT" commit -m "$commit_msg"
-
-  echo ""
-  echo "=== Pushing to origin ==="
-  git -C "$REPO_ROOT" push
+  if git -C "$REPO_ROOT" diff --cached --quiet; then
+    echo "Nothing to commit — already up to date."
+  else
+    git -C "$REPO_ROOT" commit -m "$commit_msg"
+    echo ""
+    echo "=== Pushing to origin ==="
+    git -C "$REPO_ROOT" push
+  fi
 else
   echo "=== Dry run complete ==="
   echo "No changes were made."
