@@ -51,7 +51,7 @@ npm ci
 
 **Quality scoring** (`score-plugin.sh`): 5 categories x 20 pts each = 100 total. Subtractive model (start at 20, deduct per failed rule). 28 rules across: Manifest Completeness, Documentation, Structure Integrity, Naming Conventions, Version Hygiene. See `docs/QUALITY.md` for the full rubric.
 
-**Deploy workflow** (`deploy.sh`): Fetches origin/main for all plugin submodules, reads version from plugin.json (or git tag if HEAD is tagged), updates marketplace.json, ensures .gitmodules tracks `branch = main`, and stages everything for commit.
+**Deploy workflow** (`deploy.sh`): Fetches origin/main for all plugin submodules, resolves version as the higher of plugin.json vs git tag on origin/main HEAD, updates marketplace.json, ensures .gitmodules tracks `branch = main`, commits, and pushes.
 
 **CI workflows:**
 - `validate-plugins.yml` — PR trigger. Detects changed plugins via `dorny/paths-filter`, runs validation + scoring per plugin, posts quality score as PR comment.
@@ -66,7 +66,7 @@ npm ci
 - **Plugin schema allows additionalProperties** — Top-level `plugin.json` intentionally allows unknown fields for forward compatibility with new Claude Code features.
 - **Scoring is informational, not a merge gate** — The scoring step uses `if: always()` and does not block validation.
 - **Submodule plugins are private repos** — CI workflows use `submodules: false` since GitHub Actions default token cannot access private submodule repos.
-- **Version source of truth** — `plugin.json` in each plugin's `.claude-plugin/` directory. Git tags are only used when directly on origin/main HEAD.
+- **Version resolution** — Deploy uses the higher of `plugin.json` version vs git tag on origin/main HEAD. This handles cases where a tag is pushed but `plugin.json` wasn't bumped.
 
 ## Project Structure
 

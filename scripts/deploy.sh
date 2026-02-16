@@ -10,14 +10,14 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [options]
 
-Syncs all git submodule plugins to their latest origin/main, reads version
-from plugin.json (source of truth), updates the marketplace catalog, commits,
-and pushes.
+Syncs all git submodule plugins to their latest origin/main, resolves the
+higher of plugin.json vs git tag version, updates the marketplace catalog,
+commits, and pushes.
 
 Steps performed:
   1. Ensure .gitmodules tracks branch = main for each submodule
   2. Fetch and checkout origin/main for each submodule in plugins/
-  3. Read version from plugin.json (warn on tag mismatch)
+  3. Resolve version: higher of plugin.json vs git tag on origin/main
   4. Update .claude-plugin/marketplace.json with synced versions
   5. Stage .gitmodules, submodule refs, and marketplace.json
   6. Commit and push to origin
@@ -59,6 +59,20 @@ if [[ ! -f "$MARKETPLACE_FILE" ]]; then
   echo "Error: Marketplace manifest not found at $MARKETPLACE_FILE" >&2
   exit 2
 fi
+
+# --- Semver comparison (bash 3.x compatible) ---
+# Returns 0 if $1 > $2, 1 otherwise
+semver_gt() {
+  local IFS=.
+  local a=($1) b=($2)
+  local i
+  for i in 0 1 2; do
+    local av="${a[$i]:-0}" bv="${b[$i]:-0}"
+    if [[ "$av" -gt "$bv" ]]; then return 0; fi
+    if [[ "$av" -lt "$bv" ]]; then return 1; fi
+  done
+  return 1  # equal
+}
 
 # --- Discover submodules under plugins/ ---
 submodules=()
@@ -124,25 +138,32 @@ for sub_path in "${submodules[@]}"; do
     echo "  Already at latest"
   fi
 
-  # Step 3: Get version from plugin.json (source of truth)
-  # Read plugin.json from the remote ref, not the local working tree
+  # Step 3: Resolve version — higher of plugin.json vs git tag on origin/main
   plugin_json_content=$(git -C "$sub_dir" show origin/main:.claude-plugin/plugin.json 2>/dev/null || true)
+  head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
 
+  json_version="0.0.0"
   if [[ -n "$plugin_json_content" ]]; then
-    tag_version=$(echo "$plugin_json_content" | jq -r '.version // "0.0.0"')
-    echo "  Version:  $tag_version (from plugin.json)"
-  else
-    tag_version="0.0.0"
-    echo "  Version:  $tag_version (no plugin.json found)"
+    json_version=$(echo "$plugin_json_content" | jq -r '.version // "0.0.0"')
   fi
 
-  # Warn if a git tag on origin/main disagrees with plugin.json
-  head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
+  tag_ver="0.0.0"
   if [[ -n "$head_tag" ]]; then
-    head_tag_ver="${head_tag#v}"
-    if [[ "$head_tag_ver" != "$tag_version" ]]; then
-      echo "  WARNING: tag $head_tag ($head_tag_ver) != plugin.json ($tag_version)"
-      echo "           plugin.json is source of truth — using $tag_version"
+    tag_ver="${head_tag#v}"
+  fi
+
+  if [[ "$json_version" == "$tag_ver" ]]; then
+    tag_version="$json_version"
+    echo "  Version:  $tag_version (plugin.json + tag agree)"
+  elif semver_gt "$tag_ver" "$json_version"; then
+    tag_version="$tag_ver"
+    echo "  Version:  $tag_version (from tag $head_tag > plugin.json $json_version)"
+  else
+    tag_version="$json_version"
+    if [[ "$tag_ver" == "0.0.0" ]]; then
+      echo "  Version:  $tag_version (from plugin.json, no tag)"
+    else
+      echo "  Version:  $tag_version (from plugin.json > tag $head_tag)"
     fi
   fi
 
