@@ -20,6 +20,7 @@ Steps performed:
   3. Read the latest semver git tag as the plugin version
   4. Update .claude-plugin/marketplace.json with synced versions
   5. Stage .gitmodules, submodule refs, and marketplace.json
+  6. Commit and push to origin
 
 Options:
   --dry-run   Show what would change without modifying anything
@@ -185,9 +186,23 @@ if [[ "$DRY_RUN" == false ]]; then
   done
   git -C "$REPO_ROOT" add .claude-plugin/marketplace.json
   echo "Staged: .gitmodules, submodule refs, marketplace.json"
+
+  # Build commit message with version summary
+  commit_msg="chore: deploy — sync plugin submodules to latest"
+  if [[ ${#updated_plugins[@]} -gt 0 ]]; then
+    commit_msg="$commit_msg"$'\n\n'"Updated versions:"
+    for entry in "${updated_plugins[@]}"; do
+      commit_msg="$commit_msg"$'\n'"  ${entry%%:*} -> ${entry#*:}"
+    done
+  fi
+
   echo ""
-  echo "Review with: git diff --cached"
-  echo "Commit with: git commit -m 'chore: sync plugin submodules to latest'"
+  echo "=== Committing ==="
+  git -C "$REPO_ROOT" commit -m "$commit_msg"
+
+  echo ""
+  echo "=== Pushing to origin ==="
+  git -C "$REPO_ROOT" push
 else
   echo "=== Dry run complete ==="
   echo "No changes were made."
