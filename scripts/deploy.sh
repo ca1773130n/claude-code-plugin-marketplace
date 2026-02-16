@@ -10,14 +10,15 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [options]
 
-Syncs all git submodule plugins to their latest origin/main, resolves the
-higher of plugin.json vs git tag version, updates the marketplace catalog,
-commits, and pushes.
+Syncs all git submodule plugins to their latest origin/main, resolves version,
+fixes plugin.json/tag mismatches in the submodule upstream, updates the
+marketplace catalog, commits, and pushes.
 
 Steps performed:
   1. Ensure .gitmodules tracks branch = main for each submodule
   2. Fetch and checkout origin/main for each submodule in plugins/
-  3. Resolve version: higher of plugin.json vs git tag on origin/main
+  3. Resolve version: if tag > plugin.json, fix the submodule upstream
+     (bump plugin.json, delete wrong tag, commit, push, re-tag, push tag)
   4. Update .claude-plugin/marketplace.json with synced versions
   5. Stage .gitmodules, submodule refs, and marketplace.json
   6. Commit and push to origin
@@ -138,7 +139,7 @@ for sub_path in "${submodules[@]}"; do
     echo "  Already at latest"
   fi
 
-  # Step 3: Resolve version — higher of plugin.json vs git tag on origin/main
+  # Step 3: Resolve version — if tag > plugin.json, fix the submodule upstream
   plugin_json_content=$(git -C "$sub_dir" show origin/main:.claude-plugin/plugin.json 2>/dev/null || true)
   head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
 
@@ -157,7 +158,41 @@ for sub_path in "${submodules[@]}"; do
     echo "  Version:  $tag_version (plugin.json + tag agree)"
   elif semver_gt "$tag_ver" "$json_version"; then
     tag_version="$tag_ver"
-    echo "  Version:  $tag_version (from tag $head_tag > plugin.json $json_version)"
+    echo "  Version:  $tag_version (tag $head_tag > plugin.json $json_version)"
+    # Fix the submodule: bump plugin.json, remove wrong tag, commit, push, re-tag
+    if [[ "$DRY_RUN" == false ]]; then
+      echo "  Fixing submodule upstream..."
+      plugin_json_file="$sub_dir/.claude-plugin/plugin.json"
+
+      # Delete the wrong tag (local + remote)
+      echo "    Deleting tag $head_tag (on wrong commit)..."
+      git -C "$sub_dir" tag -d "$head_tag" >/dev/null 2>&1
+      git -C "$sub_dir" push origin ":refs/tags/$head_tag" --quiet
+
+      # Bump plugin.json version
+      echo "    Bumping plugin.json $json_version -> $tag_version..."
+      tmp_pj=$(mktemp)
+      jq --arg ver "$tag_version" '.version = $ver' "$plugin_json_file" > "$tmp_pj"
+      mv "$tmp_pj" "$plugin_json_file"
+
+      # Commit and push
+      git -C "$sub_dir" add .claude-plugin/plugin.json
+      git -C "$sub_dir" commit -m "chore: bump version to $tag_version" --quiet
+      git -C "$sub_dir" push origin HEAD:main --quiet
+
+      # Re-tag the new commit and push
+      echo "    Tagging new commit as $head_tag..."
+      git -C "$sub_dir" tag "$head_tag"
+      git -C "$sub_dir" push origin "$head_tag" --quiet
+
+      # Update local refs so the marketplace gets the new hash
+      git -C "$sub_dir" fetch origin --tags --force --quiet
+      git -C "$sub_dir" checkout origin/main --quiet
+      new_hash=$(git -C "$sub_dir" rev-parse HEAD)
+      echo "    Submodule now at ${new_hash:0:12}"
+    else
+      echo "  [dry-run] would fix submodule: bump plugin.json, re-tag, push"
+    fi
   else
     tag_version="$json_version"
     if [[ "$tag_ver" == "0.0.0" ]]; then

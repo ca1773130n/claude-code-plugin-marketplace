@@ -66,7 +66,7 @@ npm ci
 - **Plugin schema allows additionalProperties** — Top-level `plugin.json` intentionally allows unknown fields for forward compatibility with new Claude Code features.
 - **Scoring is informational, not a merge gate** — The scoring step uses `if: always()` and does not block validation.
 - **Submodule plugins are private repos** — CI workflows use `submodules: false` since GitHub Actions default token cannot access private submodule repos.
-- **Version resolution** — Deploy uses the higher of `plugin.json` version vs git tag on origin/main HEAD. This handles cases where a tag is pushed but `plugin.json` wasn't bumped.
+- **Version resolution** — Deploy uses the higher of `plugin.json` version vs git tag on origin/main HEAD. If tag > plugin.json, the script auto-fixes the submodule upstream (bumps plugin.json, deletes wrong tag, commits, pushes, re-tags).
 
 ## Project Structure
 
