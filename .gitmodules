@@ -1,8 +1,8 @@
 [submodule "plugins/GetResearchDone"]
 	path = plugins/GetResearchDone
-	url = https://github.com/ca1773130n/GetResearchDone.git
+	url = git@github.com:ca1773130n/GetResearchDone.git
 	branch = main
 [submodule "plugins/HarnessSync"]
 	path = plugins/HarnessSync
-	url = https://github.com/ca1773130n/HarnessSync.git
+	url = git@github.com:ca1773130n/HarnessSync.git
 	branch = main
