@@ -10,7 +10,7 @@
     {
       "name": "grd",
       "description": "Get Research Done — R&D workflow automation for Claude Code",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "Cameleon X"
       },
