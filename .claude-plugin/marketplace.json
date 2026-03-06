@@ -19,7 +19,7 @@
         "url": "git@github.com:ca1773130n/GetResearchDone.git"
       },
       "category": "development",
-      "homepage": "git@github.com:ca1773130n/GetResearchDone"
+      "homepage": "https://github.com/ca1773130n/GetResearchDone"
     },
     {
       "name": "harness-sync",
@@ -33,7 +33,7 @@
         "url": "git@github.com:ca1773130n/HarnessSync.git"
       },
       "category": "development",
-      "homepage": "git@github.com:ca1773130n/HarnessSync"
+      "homepage": "https://github.com/ca1773130n/HarnessSync"
     }
   ]
 }

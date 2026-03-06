@@ -51,6 +51,16 @@ if [[ ! -f "$MARKETPLACE_SCHEMA" ]]; then
   exit 2
 fi
 
+# --- Helper: convert git URL to HTTPS homepage ---
+git_url_to_https() {
+  local url="$1"
+  url="${url%.git}"
+  case "$url" in
+    git@github.com:*) echo "https://github.com/${url#git@github.com:}" ;;
+    *) echo "$url" ;;
+  esac
+}
+
 # --- Discover all plugin.json files ---
 plugin_files=()
 while IFS= read -r f; do
@@ -81,8 +91,8 @@ for pf in "${plugin_files[@]}"; do
     upstream_url="$(head -1 "$upstream_file" | tr -d '[:space:]')"
     # Remote source: {"source": "url", "url": "https://..."}
     source_json=$(jq -n --arg url "$upstream_url" '{"source": "url", "url": $url}')
-    # Homepage: strip .git suffix
-    homepage="${upstream_url%.git}"
+    # Homepage: convert to HTTPS URL
+    homepage="$(git_url_to_https "$upstream_url")"
     echo "  $local_source -> remote: $upstream_url"
 
     # Fetch latest plugin.json from upstream repo for metadata (version, description, etc.)
@@ -91,6 +101,10 @@ for pf in "${plugin_files[@]}"; do
     case "$upstream_url" in
       https://github.com/*)
         repo_path="${upstream_url#https://github.com/}"
+        repo_path="${repo_path%.git}"
+        ;;
+      git@github.com:*)
+        repo_path="${upstream_url#git@github.com:}"
         repo_path="${repo_path%.git}"
         ;;
     esac
@@ -113,7 +127,7 @@ for pf in "${plugin_files[@]}"; do
     submodule_url=$(git -C "$REPO_ROOT" config -f .gitmodules --get "submodule.${submodule_path}.url" 2>/dev/null || true)
     if [[ -n "$submodule_url" ]]; then
       source_json=$(jq -n --arg url "$submodule_url" '{"source": "url", "url": $url}')
-      homepage="${submodule_url%.git}"
+      homepage="$(git_url_to_https "$submodule_url")"
       echo "  $local_source -> submodule: $submodule_url"
     else
       source_json=$(jq -n --arg s "$local_source" '$s')
