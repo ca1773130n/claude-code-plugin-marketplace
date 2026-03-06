@@ -16,13 +16,13 @@
       },
       "source": {
         "source": "url",
-        "url": "https://github.com/ca1773130n/GetResearchDone.git"
+        "url": "git@github.com:ca1773130n/GetResearchDone.git"
       },
       "category": "development",
-      "homepage": "https://github.com/ca1773130n/GetResearchDone"
+      "homepage": "git@github.com:ca1773130n/GetResearchDone"
     },
     {
-      "name": "HarnessSync",
+      "name": "harness-sync",
       "description": "Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode. Configure once, sync everywhere.",
       "version": "0.1.0",
       "author": {
@@ -30,10 +30,10 @@
       },
       "source": {
         "source": "url",
-        "url": "https://github.com/ca1773130n/HarnessSync.git"
+        "url": "git@github.com:ca1773130n/HarnessSync.git"
       },
       "category": "development",
-      "homepage": "https://github.com/ca1773130n/HarnessSync"
+      "homepage": "git@github.com:ca1773130n/HarnessSync"
     }
   ]
 }
