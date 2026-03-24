@@ -10,7 +10,7 @@
     {
       "name": "grd",
       "description": "Get Research Done — R&D workflow automation for Claude Code",
-      "version": "0.3.19",
+      "version": "0.3.21",
       "author": {
         "name": "Cameleon X"
       },
@@ -24,7 +24,7 @@
     {
       "name": "harness-sync",
       "description": "Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode. Configure once, sync everywhere.",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "author": {
         "name": "HarnessSync Contributors"
       },
