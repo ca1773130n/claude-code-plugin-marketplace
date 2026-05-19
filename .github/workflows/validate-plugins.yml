@@ -31,6 +31,8 @@ jobs:
               - 'plugins/GetResearchDone/**'
             HarnessSync:
               - 'plugins/HarnessSync/**'
+            Tesserae:
+              - 'plugins/Tesserae/**'
 
   validate-plugins:
     needs: detect-changes
@@ -49,21 +51,41 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - name: Validate ${{ matrix.plugin }}
-        env:
-          PLUGIN_NAME: ${{ matrix.plugin }}
-        run: ./scripts/validate-plugin.sh "plugins/$PLUGIN_NAME"
-      - name: Score ${{ matrix.plugin }}
-        id: score
-        if: always()
+      - name: Resolve plugin directory
+        id: resolve
         env:
           PLUGIN_NAME: ${{ matrix.plugin }}
         run: |
+          # Find the .claude-plugin/plugin.json under plugins/<name>/, supporting
+          # nested layouts (e.g. plugins/Tesserae/plugin/.claude-plugin/plugin.json).
+          MANIFEST=$(find "plugins/$PLUGIN_NAME" -path '*/.claude-plugin/plugin.json' -type f 2>/dev/null | sort | head -1)
+          if [[ -z "$MANIFEST" ]]; then
+            echo "No .claude-plugin/plugin.json under plugins/$PLUGIN_NAME (likely a submodule not checked out)"
+            echo "dir=plugins/$PLUGIN_NAME" >> "$GITHUB_OUTPUT"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            PLUGIN_DIR="$(dirname "$(dirname "$MANIFEST")")"
+            echo "Resolved: $PLUGIN_DIR"
+            echo "dir=$PLUGIN_DIR" >> "$GITHUB_OUTPUT"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Validate ${{ matrix.plugin }}
+        if: steps.resolve.outputs.found == 'true'
+        env:
+          PLUGIN_DIR: ${{ steps.resolve.outputs.dir }}
+        run: ./scripts/validate-plugin.sh "$PLUGIN_DIR"
+      - name: Score ${{ matrix.plugin }}
+        id: score
+        if: always() && steps.resolve.outputs.found == 'true'
+        env:
+          PLUGIN_NAME: ${{ matrix.plugin }}
+          PLUGIN_DIR: ${{ steps.resolve.outputs.dir }}
+        run: |
           # Run human-readable output for CI log
-          ./scripts/score-plugin.sh "plugins/$PLUGIN_NAME" || true
+          ./scripts/score-plugin.sh "$PLUGIN_DIR" || true
 
           # Capture JSON output for PR comment
-          SCORE_JSON=$(./scripts/score-plugin.sh "plugins/$PLUGIN_NAME" --json 2>/dev/null || echo '{"plugin":"unknown","total":0}')
+          SCORE_JSON=$(./scripts/score-plugin.sh "$PLUGIN_DIR" --json 2>/dev/null || echo '{"plugin":"unknown","total":0}')
           TOTAL=$(echo "$SCORE_JSON" | jq -r '.total // 0')
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
 
@@ -90,7 +112,7 @@ jobs:
           echo -e "$COMMENT" >> "$GITHUB_OUTPUT"
           echo "SCORE_EOF" >> "$GITHUB_OUTPUT"
       - name: Comment PR with quality score
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && steps.resolve.outputs.found == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
           message: ${{ steps.score.outputs.comment }}

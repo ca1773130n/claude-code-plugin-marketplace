@@ -139,8 +139,22 @@ for sub_path in "${submodules[@]}"; do
     echo "  Already at latest"
   fi
 
+  # Discover the manifest path within the submodule (handles nested layouts
+  # like plugin/.claude-plugin/plugin.json — e.g. the Tesserae plugin).
+  manifest_rel=$(git -C "$sub_dir" ls-tree -r --name-only origin/main 2>/dev/null \
+    | grep -E '(^|/)\.claude-plugin/plugin\.json$' | sort | head -1 || true)
+  if [[ -z "$manifest_rel" ]]; then
+    echo "  WARNING: no .claude-plugin/plugin.json found in $sub_name origin/main"
+    echo "  Skipping version sync for $sub_name"
+    echo ""
+    continue
+  fi
+  if [[ "$manifest_rel" != ".claude-plugin/plugin.json" ]]; then
+    echo "  Manifest: $manifest_rel (nested layout)"
+  fi
+
   # Step 3: Resolve version — if tag > plugin.json, fix the submodule upstream
-  plugin_json_content=$(git -C "$sub_dir" show origin/main:.claude-plugin/plugin.json 2>/dev/null || true)
+  plugin_json_content=$(git -C "$sub_dir" show "origin/main:$manifest_rel" 2>/dev/null || true)
   head_tag=$(git -C "$sub_dir" tag --points-at origin/main --sort=-v:refname 2>/dev/null | head -1 || true)
 
   json_version="0.0.0"
@@ -162,7 +176,7 @@ for sub_path in "${submodules[@]}"; do
     # Fix the submodule: bump plugin.json, remove wrong tag, commit, push, re-tag
     if [[ "$DRY_RUN" == false ]]; then
       echo "  Fixing submodule upstream..."
-      plugin_json_file="$sub_dir/.claude-plugin/plugin.json"
+      plugin_json_file="$sub_dir/$manifest_rel"
 
       # Delete the wrong tag (local + remote)
       echo "    Deleting tag $head_tag (on wrong commit)..."
@@ -176,7 +190,7 @@ for sub_path in "${submodules[@]}"; do
       mv "$tmp_pj" "$plugin_json_file"
 
       # Commit and push
-      git -C "$sub_dir" add .claude-plugin/plugin.json
+      git -C "$sub_dir" add "$manifest_rel"
       git -C "$sub_dir" commit -m "chore: bump version to $tag_version" --quiet
       git -C "$sub_dir" push origin HEAD:main --quiet
 
