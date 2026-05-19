@@ -6,3 +6,7 @@
 	path = plugins/HarnessSync
 	url = git@github.com:ca1773130n/HarnessSync.git
 	branch = main
+[submodule "plugins/Tesserae"]
+	path = plugins/Tesserae
+	url = git@github.com:ca1773130n/Tesserae.git
+	branch = main

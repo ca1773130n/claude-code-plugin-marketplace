@@ -121,24 +121,37 @@ for pf in "${plugin_files[@]}"; do
         echo "    WARNING: could not fetch upstream plugin.json, using local copy" >&2
       fi
     fi
-  elif [[ -f "$plugin_dir/.git" ]] && [[ -f "$REPO_ROOT/.gitmodules" ]]; then
-    # Git submodule: extract URL from .gitmodules
-    submodule_path="${plugin_dir#"$REPO_ROOT/"}"
-    submodule_url=$(git -C "$REPO_ROOT" config -f .gitmodules --get "submodule.${submodule_path}.url" 2>/dev/null || true)
+  else
+    # Walk up parent dirs to find an enclosing submodule (handles nested layouts
+    # like plugins/<repo>/<subdir>/.claude-plugin/plugin.json).
+    submodule_url=""
+    submodule_path=""
+    if [[ -f "$REPO_ROOT/.gitmodules" ]]; then
+      probe="$plugin_dir"
+      while [[ "$probe" != "$REPO_ROOT" && "$probe" != "/" ]]; do
+        if [[ -e "$probe/.git" ]]; then
+          submodule_path="${probe#"$REPO_ROOT/"}"
+          submodule_url=$(git -C "$REPO_ROOT" config -f .gitmodules --get "submodule.${submodule_path}.url" 2>/dev/null || true)
+          [[ -n "$submodule_url" ]] && break
+        fi
+        probe="$(dirname "$probe")"
+      done
+    fi
+
     if [[ -n "$submodule_url" ]]; then
       source_json=$(jq -n --arg url "$submodule_url" '{"source": "url", "url": $url}')
       homepage="$(git_url_to_https "$submodule_url")"
-      echo "  $local_source -> submodule: $submodule_url"
+      if [[ "$submodule_path" == "${plugin_dir#"$REPO_ROOT/"}" ]]; then
+        echo "  $local_source -> submodule: $submodule_url"
+      else
+        echo "  $local_source -> submodule ($submodule_path): $submodule_url"
+      fi
     else
+      # Local source: relative path string
       source_json=$(jq -n --arg s "$local_source" '$s')
       homepage=""
-      echo "  $local_source: local (submodule URL not found)"
+      echo "  $local_source: local"
     fi
-  else
-    # Local source: relative path string
-    source_json=$(jq -n --arg s "$local_source" '$s')
-    homepage=""
-    echo "  $local_source: local"
   fi
 
   # Determine category (default: development)
