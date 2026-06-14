@@ -24,7 +24,7 @@
     {
       "name": "harness-sync",
       "description": "Sync Claude Code configuration to Codex, Gemini CLI, and OpenCode. Configure once, sync everywhere.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "HarnessSync Contributors"
       },
@@ -38,7 +38,7 @@
     {
       "name": "tesserae",
       "description": "Slash commands, hooks, a skill, and MCP auto-registration for the Tesserae project-memory compiler. Drive the full tesserae workflow from inside a Claude Code session.",
-      "version": "0.8.2",
+      "version": "0.9.0",
       "author": {
         "name": "Tesserae Contributors"
       },
