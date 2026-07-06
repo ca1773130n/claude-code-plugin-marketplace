@@ -10,7 +10,7 @@
     {
       "name": "grd",
       "description": "Get Research Done — R&D workflow automation for Claude Code",
-      "version": "0.4.12",
+      "version": "0.4.13",
       "author": {
         "name": "Cameleon X"
       },
@@ -38,7 +38,7 @@
     {
       "name": "tesserae",
       "description": "Slash commands, hooks, a skill, and MCP auto-registration for the Tesserae project-memory compiler. Drive the full tesserae workflow from inside a Claude Code session.",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "author": {
         "name": "Tesserae Contributors"
       },
